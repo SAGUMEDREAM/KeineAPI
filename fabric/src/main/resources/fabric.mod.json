@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+
+  "name": "${mod_name}",
+  "description": "${description}",
+  "authors": [
+    "${mod_author}"
+  ],
+  "contact": {
+    "homepage": "${homepage}",
+    "sources": "${sources}",
+    "issues": "${issues}"
+  },
+
+  "license": "${license}",
+  "icon": "${mod_id}.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "cc.thonly.keine.fabric.FabricKeine"
+    ],
+    "client": [
+      "cc.thonly.keine.fabric.client.FabricKeineClient"
+    ],
+    "fabric-datagen": [
+    ]
+  },
+  "mixins": [
+    "keine.mixins.json",
+    "keine.fabric.mixins.json"
+  ],
+  "depends": {
+    "java": ">=${java_version}",
+    "minecraft": ">=${minecraft_version}",
+    "fabricloader": "*",
+    "fabric-api": "*",
+    "balm-fabric": ">=${balm_version}"
+  },
+  "suggests": {
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.discord": "${discord}"
+      }
+    }
+  }
+}

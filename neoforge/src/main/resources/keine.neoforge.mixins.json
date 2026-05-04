@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "cc.thonly.keine.neoforge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "AxeItemMixin",
+    "BlockEntityTypeAccessor",
+    "BlockEntityTypeMixin",
+    "ComposterBlockMixin",
+    "LootTableMixin",
+    "RegistryDataLoaderMixin",
+    "ReloadableServerRegistriesMixin",
+    "SimpleJsonResourceReloadListenerMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
