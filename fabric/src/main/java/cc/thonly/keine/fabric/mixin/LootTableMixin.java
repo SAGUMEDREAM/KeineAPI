@@ -59,7 +59,7 @@ class LootTableMixin implements KeineLootTable {
 	}
 
 	@Override
-	public void keine$setRegistryEntry(Holder<LootTable> key) {
+	public void keine$setHolder(Holder<LootTable> key) {
 		this.entry = key;
 	}
 }

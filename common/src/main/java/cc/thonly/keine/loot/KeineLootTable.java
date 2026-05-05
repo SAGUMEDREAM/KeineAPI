@@ -20,5 +20,5 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 public interface KeineLootTable {
-	void keine$setRegistryEntry(Holder<LootTable> key);
+	void keine$setHolder(Holder<LootTable> key);
 }

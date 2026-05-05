@@ -9,14 +9,8 @@ plugins {
 
 dependencies {
     minecraft libs.minecraft
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment variantOf(libs.parchment) {
-            artifactType('zip')
-        }
-    }
-    modImplementation libs.fabricLoader
-    modImplementation libs.fabricApi
+    implementation libs.fabricLoader
+    implementation libs.fabricApi
 }
 
 apply from: rootProject.file('repositories.gradle')
@@ -29,7 +23,7 @@ loom {
     }
 
     mixin {
-        defaultRefmapName.set("${mod_id}.refmap.json")
+//        defaultRefmapName.set("${mod_id}.refmap.json")
     }
 
     runs {
@@ -55,45 +49,5 @@ loom {
             vmArg "-Dfabric-api.datagen.output-dir=${project(":common").file("src/generated/resources")}"
             vmArg "-Dfabric-api.datagen.modid=${mod_id}"
         }
-    }
-}
-
-tasks.register('curseforge', TaskPublishCurseForge) {
-    dependsOn('build')
-    description = 'Publishes the Fabric build to CurseForge.'
-    group = 'publishing'
-
-    apiToken = project.findProperty("curseforge.api_key") ?: System.getenv("CURSEFORGE_TOKEN") ?: "none"
-
-    def projectId = findProperty("curseforge_project_id")
-    onlyIf {
-        projectId != null
-    }
-    if (projectId) {
-        def mainFile = upload(findProperty("curseforge_project_id"), remapJar.archiveFile.get().asFile)
-        mainFile.changelog = rootProject.file('CHANGELOG.md').text
-        mainFile.addRequirement("fabric-api")
-        mainFile.addRequirement("balm")
-        mainFile.addGameVersion(libs.minecraft.get().version)
-        mainFile.releaseType = "release"
-        project.findProperty("curseforge_environments")?.split(",")?.toList()?.each { mainFile.addEnvironment(it) }
-    }
-}
-
-modrinth {
-    token = project.findProperty("modrinth.token") ?: System.getenv("MODRINTH_TOKEN") ?: "none"
-    projectId = findProperty("modrinth_project_id")
-    versionType = "release"
-    versionNumber = project.version + "+fabric-" + libs.minecraft.get().version
-    uploadFile = remapJar
-    def changelogFile = rootProject.file("CHANGELOG.md")
-    if (changelogFile.exists()) {
-        changelog = changelogFile.text
-    }
-    gameVersions = [libs.minecraft.get().version]
-    loaders = ['fabric']
-    dependencies {
-        required.project "fabric-api"
-        required.project "balm"
     }
 }

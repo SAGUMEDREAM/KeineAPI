@@ -3,6 +3,7 @@ package cc.thonly.keine.neoforge;
 import cc.thonly.keine.api.KeineAPI;
 import cc.thonly.keine.api.KeineRegistries;
 import cc.thonly.keine.api.registry.*;
+import cc.thonly.keine.mixin.FireBlockAccessor;
 import cc.thonly.keine.neoforge.mixin.BlockEntityTypeAccessor;
 import it.unimi.dsi.fastutil.objects.Object2FloatMap;
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
@@ -18,9 +19,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FireBlock;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import cc.thonly.keine.Keine;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -47,8 +48,8 @@ public class NeoForgeKeine {
         });
     }
 
-    public NeoForgeKeine(IEventBus modEventBus) {
-        final var context = new NeoForgeLoadContext(modEventBus);
+    public NeoForgeKeine(ModContainer modContainer, IEventBus modEventBus) {
+        final var context = new NeoForgeLoadContext(modContainer, modEventBus);
         Balm.initializeMod(Keine.MOD_ID, context, Keine::initialize);
         loadApiImpl();
 
@@ -75,13 +76,13 @@ public class NeoForgeKeine {
                     }
                 }
                 FlammableBlockRegistry flammableBlockRegistry = registries.flammableBlockRegistry();
-                FireBlock fire = (FireBlock) Blocks.FIRE;
+                FireBlockAccessor fire = (FireBlockAccessor) Blocks.FIRE;
                 for (FlammableBlockRegistry.Entry entry : flammableBlockRegistry.getEntries()) {
                     Holder<Block> blockHolder = entry.blockHolder();
                     int burn = entry.burn();
                     int spread = entry.spread();
                     if (blockHolder != null) {
-                        fire.setFlammable(blockHolder.value(), spread, burn);
+                        fire.keineApi$setFlammable(blockHolder.value(), spread, burn);
                     }
                 }
                 StrippableBlockRegistry strippableBlockRegistry = registries.strippableBlockRegistry();

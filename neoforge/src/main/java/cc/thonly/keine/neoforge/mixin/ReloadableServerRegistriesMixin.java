@@ -28,6 +28,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.serialization.DynamicOps;
+import net.minecraft.world.level.storage.loot.Validatable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -81,23 +82,22 @@ abstract class ReloadableServerRegistriesMixin {
         }), fn, executor);
     }
 
-    @Inject(method = "lambda$scheduleRegistryLoad$5",
+    @Inject(method = "lambda$scheduleRegistryLoad$0",
             at = @At(value = "INVOKE",
-                    target = "Ljava/util/Map;forEach(Ljava/util/function/BiConsumer;)V",
-                    ordinal = 1
+                    target = "Ljava/util/Map;forEach(Ljava/util/function/BiConsumer;)V"
             )
     )
-    private static <T> void modifyLootTable(LootDataType<T> lootDataType,
-                                            RegistryOps<JsonElement> registryOps,
-                                            ResourceManager resourceManager,
-                                            CallbackInfoReturnable<WritableRegistry<?>> cir,
-                                            @Local(ordinal = 0) Map<Identifier, Object> map
+    private static <T extends Validatable> void modifyLootTable(LootDataType<T> type,
+                                                                RegistryOps<JsonElement> registryOps,
+                                                                ResourceManager manager,
+                                                                CallbackInfoReturnable<WritableRegistry<?>> cir,
+                                                                @Local(name = {"elements"}) Map<Identifier, T> elements
     ) {
-        map.replaceAll((identifier, t) -> modifyLootTable(t, identifier, registryOps));
+        elements.replaceAll((identifier, t) -> api$modifyLootTable(t, identifier, registryOps));
     }
 
     @Unique
-    private static <T> T modifyLootTable(T value, Identifier id, RegistryOps<JsonElement> ops) {
+    private static <T> T api$modifyLootTable(T value, Identifier id, RegistryOps<JsonElement> ops) {
         if (!(value instanceof LootTable table)) return value;
 
         ResourceKey<LootTable> key = ResourceKey.create(Registries.LOOT_TABLE, id);
@@ -122,9 +122,8 @@ abstract class ReloadableServerRegistriesMixin {
         return (T) builder.build();
     }
 
-    @SuppressWarnings("unchecked")
-    @Inject(method = "lambda$scheduleRegistryLoad$5", at = @At("RETURN"))
-    private static <T> void onLootTablesLoaded(LootDataType<T> lootDataType, RegistryOps<JsonElement> registryOps, ResourceManager resourceManager, CallbackInfoReturnable<WritableRegistry<?>> cir) {
+    @Inject(method = "lambda$scheduleRegistryLoad$0", at = @At("RETURN"))
+    private static <T extends Validatable> void onLootTablesLoaded(LootDataType<T> lootDataType, RegistryOps<JsonElement> registryOps, ResourceManager resourceManager, CallbackInfoReturnable<WritableRegistry<?>> cir) {
         if (lootDataType != LootDataType.TABLE) return;
         WritableRegistry<?> writableRegistry = cir.getReturnValue();
         if (writableRegistry == null) {
@@ -134,6 +133,6 @@ abstract class ReloadableServerRegistriesMixin {
 
         LootTableCallback.ALL_LOADED.invoker().onLootTablesLoaded(resourceManager, lootTableRegistry);
         LootUtil.SOURCES.remove();
-        lootTableRegistry.listElements().forEach(reference -> ((KeineLootTable) reference.value()).keine$setRegistryEntry(reference));
+        lootTableRegistry.listElements().forEach(reference -> ((KeineLootTable) reference.value()).keine$setHolder(reference));
     }
 }

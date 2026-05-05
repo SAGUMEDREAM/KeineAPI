@@ -7,13 +7,15 @@ import net.blay09.mods.balm.Balm;
 import net.blay09.mods.balm.fabric.platform.runtime.FabricLoadContext;
 import net.fabricmc.api.ModInitializer;
 import cc.thonly.keine.Keine;
-import net.fabricmc.fabric.api.registry.FuelRegistryEvents;
+import net.fabricmc.fabric.api.registry.CompostableRegistry;
+import net.fabricmc.fabric.api.registry.FuelValueEvents;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.FuelValues;
 
 public class FabricKeine implements ModInitializer {
     public static boolean SERVER_SIDE_ONLY = false;
@@ -45,7 +47,7 @@ public class FabricKeine implements ModInitializer {
         KeineAPI api = KeineAPI.getApi();
         for (KeineRegistries registries : api.values()) {
             CompostingChanceRegistry compostingChanceRegistry = registries.compostingChanceRegistry();
-            var fabricCompostingChanceRegistry = net.fabricmc.fabric.api.registry.CompostingChanceRegistry.INSTANCE;
+            var fabricCompostingChanceRegistry = net.fabricmc.fabric.api.registry.CompostableRegistry.INSTANCE;
             for (CompostingChanceRegistry.CompostingChanceEntry entry : compostingChanceRegistry.getEntries()) {
                 Holder<Item> item = entry.item();
                 Holder<Block> block = entry.block();
@@ -82,7 +84,7 @@ public class FabricKeine implements ModInitializer {
                 net.fabricmc.fabric.api.registry.StrippableBlockRegistry.register(input.value(), output.value());
             }
             for (FuelRegistry.Entry entry : registries.fuelRegistry().getEntries()) {
-                FuelRegistryEvents.BUILD.register((builder, context) -> {
+                FuelValueEvents.BUILD.register((builder, context) -> {
                     Holder<Item> itemHolder = entry.itemHolder();
                     Holder<Block> blockHolder = entry.blockHolder();
                     TagKey<Item> itemTagKey = entry.itemTagKey();
@@ -101,8 +103,9 @@ public class FabricKeine implements ModInitializer {
             BlockEntityTypeAddBlockRegistry blockEntityTypeAddBlockRegistry = registries.blockEntityTypeAddBlockRegistry();
             for (BlockEntityTypeAddBlockRegistry.Entry entry : blockEntityTypeAddBlockRegistry.getEntries()) {
                 Holder<BlockEntityType<?>> blockEntityTypeHolder = entry.blockEntityTypeHolder();
+                BlockEntityType<?> blockEntityType = blockEntityTypeHolder.value();
                 Holder<Block> blockHolder = entry.blockHolder();
-                blockEntityTypeHolder.value().addSupportedBlock(blockHolder.value());
+                blockEntityType.addValidBlock(blockHolder.value());
             }
         }
     }

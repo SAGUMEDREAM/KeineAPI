@@ -3,6 +3,6 @@ dependencies {
         changing = libs.versions.balm.get().endsWith("SNAPSHOT")
     }
 
-    compileOnly 'org.projectlombok:lombok:1.18.34'
-    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+    compileOnly 'org.projectlombok:lombok:1.18.40'
+    annotationProcessor 'org.projectlombok:lombok:1.18.40'
 }
