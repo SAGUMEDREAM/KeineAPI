@@ -4,6 +4,7 @@
   "package": "cc.thonly.keine.neoforge.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "AxeItemAccessor",
     "AxeItemMixin",
     "BlockEntityTypeAccessor",
     "BlockEntityTypeMixin",

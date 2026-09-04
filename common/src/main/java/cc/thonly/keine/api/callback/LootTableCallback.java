@@ -1,163 +1,67 @@
-/*
- * Copyright (c) 2016, 2017, 2018, 2019 FabricMC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package cc.thonly.keine.api.callback;
 
-import java.util.List;
-
-import cc.thonly.keine.api.loot.KeineLootTableBuilder;
 import cc.thonly.keine.api.loot.LootTableSource;
 import net.blay09.mods.balm.platform.event.Event;
 import net.blay09.mods.balm.platform.event.EventFactory;
-import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
+import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.LootTable.Builder;
+import org.jspecify.annotations.Nullable;
 
-/**
- * Events for manipulating loot tables.
- */
 public interface LootTableCallback {
+    Event<LootTableCallback.Replace> REPLACE = EventFactory.createArrayBacked(LootTableCallback.Replace.class, listeners -> (key, original, source, registries) -> {
+        for (LootTableCallback.Replace listener : listeners) {
+            LootTable replaced = listener.replaceLootTable(key, original, source, registries);
+            if (replaced != null) {
+                return replaced;
+            }
+        }
 
-	/**
-	 * This event can be used to replace loot tables.
-	 * If a loot table is replaced, the iteration will stop for that loot table.
-	 */
-	Event<Replace> REPLACE = EventFactory.createArrayBacked(Replace.class, listeners -> (key, original, source, registries) -> {
-		for (Replace listener : listeners) {
-			LootTable replaced = listener.replaceLootTable(key, original, source, registries);
+        return null;
+    });
+    Event<LootTableCallback.Modify> MODIFY = EventFactory.createArrayBacked(LootTableCallback.Modify.class, listeners -> (key, tableBuilder, source, registries) -> {
+        for (LootTableCallback.Modify listener : listeners) {
+            listener.modifyLootTable(key, tableBuilder, source, registries);
+        }
+    });
+    Event<LootTableCallback.Loaded> ALL_LOADED = EventFactory.createArrayBacked(LootTableCallback.Loaded.class, listeners -> (resourceManager, lootManager) -> {
+        for (LootTableCallback.Loaded listener : listeners) {
+            listener.onLootTablesLoaded(resourceManager, lootManager);
+        }
+    });
+    Event<LootTableCallback.ModifyDrops> MODIFY_DROPS = EventFactory.createArrayBacked(LootTableCallback.ModifyDrops.class, listeners -> (entry, context, drops) -> {
+        for (LootTableCallback.ModifyDrops listener : listeners) {
+            listener.modifyLootTableDrops(entry, context, drops);
+        }
+    });
 
-			if (replaced != null) {
-				return replaced;
-			}
-		}
+    @FunctionalInterface
+    public interface Loaded {
+        void onLootTablesLoaded(ResourceManager resourceManager, Registry<LootTable> lootRegistry);
+    }
 
-		return null;
-	});
+    @FunctionalInterface
+    public interface Modify {
+        void modifyLootTable(ResourceKey<LootTable> key, Builder tableBuilder, LootTableSource source, Provider registries);
+    }
 
-	/**
-	 * This event can be used to modify loot tables.
-	 * The main use case is to add items to vanilla or mod loot tables (e.g. modded seeds to grass).
-	 *
-	 * <p>You can also modify loot tables that are created by {@link #REPLACE}.
-	 * They have the loot table source {@link LootTableSource#REPLACED}.
-	 *
-	 * <h2>Example: adding diamonds to the cobblestone loot table</h2>
-	 * We'll add a new diamond {@linkplain net.minecraft.world.level.storage.loot.LootPool loot pool} to the cobblestone loot table
-	 * that will be dropped alongside the original cobblestone loot pool.
-	 *
-	 * <p>If you want only one of the items to drop, you can use
-	 * {@link KeineLootTableBuilder#modifyPools(java.util.function.Consumer)} to add the new item to
-	 * the original loot pool instead.
-	 * {@snippet :
-	 * LootTableCallback.MODIFY.register((key, tableBuilder, source, registries) -> {
-	 *     // If the loot table is for the cobblestone block and it is not overridden by a user:
-	 *     if (Blocks.COBBLESTONE.getLootTableKey() == key && source.isBuiltin()) {
-	 *         // Create a new loot pool that will hold the diamonds.
-	 *         LootPool.Builder pool = LootPool.builder()
-	 *             // Add diamonds...
-	 *             .with(ItemEntry.builder(Items.DIAMOND))
-	 *             // ...only if the block would survive a potential explosion.
-	 *             .conditionally(SurvivesExplosionLootCondition.builder());
-	 *
-	 *         // Add the loot pool to the loot table
-	 *         tableBuilder.pool(pool);
-	 *     }
-	 * });
-	 *}
-	 */
-	Event<Modify> MODIFY = EventFactory.createArrayBacked(Modify.class, listeners -> (key, tableBuilder, source, registries) -> {
-		for (Modify listener : listeners) {
-			listener.modifyLootTable(key, tableBuilder, source, registries);
-		}
-	});
+    @FunctionalInterface
+    public interface ModifyDrops {
+        void modifyLootTableDrops(Holder<LootTable> entry, LootContext context, List<ItemStack> drops);
+    }
 
-	/**
-	 * This event can be used for post-processing after all loot tables have been loaded and modified by Fabric.
-	 */
-	Event<Loaded> ALL_LOADED = EventFactory.createArrayBacked(Loaded.class, listeners -> (resourceManager, lootManager) -> {
-		for (Loaded listener : listeners) {
-			listener.onLootTablesLoaded(resourceManager, lootManager);
-		}
-	});
-
-	/**
-	 * This event can be used for cases where the {@link #MODIFY} and {@link #REPLACE} events are inconvenient, such as when you are modifying the result of many loot tables that are unknown,
-	 * and don't wish to add a custom loot function to every table.
-	 * <br/>Note: if the table was requested to separate drops into stacks of a given size, the resulting drops from this event will be separated.
-	 */
-	Event<ModifyDrops> MODIFY_DROPS = EventFactory.createArrayBacked(ModifyDrops.class, listeners -> (entry, context, drops) -> {
-		for (ModifyDrops listener : listeners) {
-			listener.modifyLootTableDrops(entry, context, drops);
-		}
-	});
-
-	@FunctionalInterface
-	public interface Replace {
-		/**
-		 * Replaces loot tables.
-		 *
-		 * @param key              the loot table key
-		 * @param original        the original loot table
-		 * @param source          the source of the original loot table
-		 * @param registries      the registry wrapper lookup
-		 * @return the new loot table, or null if it wasn't replaced
-		 */
-		@Nullable
-		LootTable replaceLootTable(ResourceKey<LootTable> key, LootTable original, LootTableSource source, HolderLookup.Provider registries);
-	}
-
-	@FunctionalInterface
-	public interface Modify {
-		/**
-		 * Called when a loot table is loading to modify loot tables.
-		 *
-		 * @param key              the loot table key
-		 * @param tableBuilder    a builder of the loot table being loaded
-		 * @param source          the source of the loot table
-		 * @param registries      the registry wrapper lookup
-		 */
-		void modifyLootTable(ResourceKey<LootTable> key, LootTable.Builder tableBuilder, LootTableSource source, HolderLookup.Provider registries);
-	}
-
-	@FunctionalInterface
-	public interface Loaded {
-		/**
-		 * Called when all loot tables have been loaded and {@link LootTableCallback#REPLACE} and {@link LootTableCallback#MODIFY} have been invoked.
-		 *
-		 * @param resourceManager the server resource manager
-		 * @param lootRegistry     the loot registry
-		 */
-		void onLootTablesLoaded(ResourceManager resourceManager, Registry<LootTable> lootRegistry);
-	}
-
-	@FunctionalInterface
-	public interface ModifyDrops {
-		/**
-		 * Called after a loot table is finished generating drops to modify drops.
-		 * @param entry the loot table's registry entry. This will be a {@link Holder.Reference} if the lootTable is registered, or a {@link Holder.Direct} if the table is inline
-		 * @param context the loot context for the current drops
-		 * @param drops the list of drops from the loot table to modify
-		 */
-		void modifyLootTableDrops(Holder<LootTable> entry, LootContext context, List<ItemStack> drops);
-	}
+    @FunctionalInterface
+    public interface Replace {
+        @Nullable
+        LootTable replaceLootTable(ResourceKey<LootTable> key, LootTable original, LootTableSource source, Provider registries);
+    }
 }

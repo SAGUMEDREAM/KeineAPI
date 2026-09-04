@@ -39,7 +39,7 @@ import java.util.Map;
 public class SimpleJsonResourceReloadListenerMixin {
 	@Inject(method = "scanDirectory(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/FileToIdConverter;Lcom/mojang/serialization/DynamicOps;Lcom/mojang/serialization/Codec;Ljava/util/Map;)V", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/resources/FileToIdConverter;fileToId(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/resources/Identifier;", shift = At.Shift.AFTER))
 	private static <T> void fillSourceMap(ResourceManager manager, FileToIdConverter resourceFinder, DynamicOps<JsonElement> ops, Codec<T> codec, Map<Identifier, T> result, CallbackInfo ci, @Local Map.Entry<Identifier, Resource> entry, @Local(ordinal = 1) Identifier id) {
-		final String dirName = ((FileToIdConverterAccessor) resourceFinder).getDirectoryName();
+		String dirName = resourceFinder.prefix;
 		if (!LootDataType.TABLE.registryKey().identifier().getPath().equals(dirName)) return;
 
 		LootUtil.SOURCES.get().put(id, LootUtil.determineSource(entry.getValue()));

@@ -1,5 +1,12 @@
 repositories {
     maven {
+        name = 'Fabric'
+        url = uri("https://maven.fabricmc.net")
+    }
+
+    maven { url = "https://maven.architectury.dev/" }
+
+    maven {
         name = 'Twelve Iterations'
         url = 'https://maven.twelveiterations.com/repository/maven-public/'
         content {

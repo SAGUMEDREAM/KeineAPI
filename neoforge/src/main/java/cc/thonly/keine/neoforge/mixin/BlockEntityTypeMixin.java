@@ -1,5 +1,6 @@
 package cc.thonly.keine.neoforge.mixin;
 
+import cc.thonly.keine.util.DeferredSet;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -27,7 +28,7 @@ public class BlockEntityTypeMixin<T extends BlockEntity> {
     )
     private void mutableBlocks(BlockEntityType.BlockEntitySupplier<? extends T> factory, Set<Block> blocks, CallbackInfo ci) {
         if (!(this.validBlocks instanceof HashSet)) {
-            this.validBlocks = new HashSet<>(this.validBlocks);
+            this.validBlocks = new DeferredSet<>(this.validBlocks);
         }
 
     }

@@ -120,6 +120,6 @@ abstract class ReloadableServerRegistriesMixin {
 
 		LootTableCallback.ALL_LOADED.invoker().onLootTablesLoaded(resourceManager, lootTableRegistry);
 		LootUtil.SOURCES.remove();
-		lootTableRegistry.listElements().forEach(reference -> ((KeineLootTable) reference.value()).keine$setRegistryEntry(reference));
+		lootTableRegistry.listElements().forEach(reference -> ((KeineLootTable) reference.value()).keine$setHolder(reference));
 	}
 }
