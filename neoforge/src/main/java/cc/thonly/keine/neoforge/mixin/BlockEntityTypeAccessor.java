@@ -11,4 +11,7 @@ import java.util.Set;
 public interface BlockEntityTypeAccessor {
     @Accessor("validBlocks")
     Set<Block> api$getBlocks();
+
+    @Accessor("validBlocks")
+    void api$setBlocks(Set<Block> set);
 }

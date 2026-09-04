@@ -1,27 +1,40 @@
 package cc.thonly.keine.api;
 
 import cc.thonly.keine.Keine;
-import net.minecraft.core.Registry;
-
+import cc.thonly.keine.network.DataSyncRequest;
 import java.util.Collection;
-import java.util.function.Consumer;
+
+import net.blay09.mods.balm.Balm;
+import net.minecraft.core.Registry;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 public interface KeineAPI {
-    default KeineRegistries get(String modId) {
-        return Keine.id2Api.computeIfAbsent(modId, KeineRegistries::new);
-    }
+   default KeineRegistries getRegistries(String modId) {
+      return Keine.id2Registries.computeIfAbsent(modId, KeineRegistries::new);
+   }
 
-    default KeineRegistries global() {
-        return Keine.id2Api.computeIfAbsent("global", KeineRegistries::new);
-    }
+   default KeineRegistries globalRegistries() {
+      return Keine.id2Registries.computeIfAbsent("global", KeineRegistries::new);
+   }
 
-    default Collection<KeineRegistries> values() {
-        return Keine.id2Api.values();
-    }
+   default Collection<KeineRegistries> values() {
+      return Keine.id2Registries.values();
+   }
 
-    <T> void unfreeze(Registry<T> registry);
+   <T> void unfreeze(Registry<T> registry);
 
-    static KeineAPI getApi() {
-        return Keine.api();
-    }
+   boolean directRegister();
+
+   static KeineAPI getApi() {
+      return Keine.api();
+   }
+
+   static void requestUpdateEntity(Player player, Entity entity) {
+      Level level = entity.level();
+      if (level.isClientSide()) {
+         Balm.networking().sendToServer(new DataSyncRequest(entity.getId(), level.dimension().identifier()));
+      }
+   }
 }
